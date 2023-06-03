@@ -10,7 +10,6 @@ def pipe_remove_invalid(df: pl.DataFrame) -> pl.DataFrame:
             ).alias("valid")
         )
         .filter(pl.col("valid"))
-        .drop(columns=["", "7"])
     )
 
 
@@ -171,7 +170,7 @@ def pipe_fix_dtype(df: pl.DataFrame) -> pl.DataFrame:
     return df.with_columns(pl.col("rank").cast(int))
 
 
-def pipe_rename_columns_mean(df: pl.DataFrame) -> pl.DataFrame:
+def pipe_rename_columns_names(df: pl.DataFrame) -> pl.DataFrame:
     def decide_mapping_men(name, number_columns, mappings):
         if "half" in name:
             return mappings[2]
@@ -230,4 +229,31 @@ def pipe_rename_columns_mean(df: pl.DataFrame) -> pl.DataFrame:
 
     return df.with_columns([pl.col(c).cast(str) for c in df.columns]).rename(
         mapping=decide_mapping_men(df["event"].unique()[0], len(df.columns), mappings)
+    )
+
+
+def pipe_assign_file_name(df: pl.DataFrame, file: str) -> pl.DataFrame:
+    return df.with_columns(
+        [
+            pl.lit(file.split("/")[4]).alias("event"),
+            pl.lit(file).alias("file"),
+        ]
+    )
+
+
+def pipe_drop_unwanted_columns(df: pl.DataFrame) -> pl.DataFrame:
+    should_be_dropped = ["3", "valid", "", "7"]
+    columns = [c for c in should_be_dropped if c in df.columns]
+    return df.drop(columns=columns)
+
+
+def pipe_get_wr_strength_by_comparing_with_tenth(df: pl.DataFrame) -> pl.DataFrame:
+    return df.with_columns(  # add percentages w.r.t world records
+        (
+            100
+            * (
+                pl.col("result seconds")
+                / pl.col("result seconds").head(10).last().over("event")
+            )
+        ).alias("percentage of 10th")
     )
