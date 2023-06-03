@@ -1,4 +1,5 @@
 import glob
+from typing import Callable
 
 import polars as pl
 
@@ -16,17 +17,30 @@ from alltime_athletics_viz.pipes import (
     pipe_get_wr_strength_by_comparing_with_tenth,
     pipe_remove_all_null_columns,
     pipe_remove_invalid,
-    pipe_rename_columns_names,
+    pipe_rename_columns_names_men,
+    pipe_rename_columns_names_women,
 )
 
 
-def import_men_running_only_events() -> pl.DataFrame:
-    """So far only works with men's legal standard marks."""
+def import_running_only_events() -> pl.DataFrame:
+    df_men = import_running_only_events_sex(
+        pipe_rename_columns_names_men, "men"
+    ).with_columns(pl.lit("men").alias("sex"))
+    df_women = import_running_only_events_sex(
+        pipe_rename_columns_names_women, "women"
+    ).with_columns(pl.lit("women").alias("sex"))
+
+    return pl.concat([df_women, df_men])
+
+
+def import_running_only_events_sex(
+    pipe_rename_column_names: Callable[[pl.DataFrame], pl.DataFrame], sex: str
+) -> pl.DataFrame:
     return pl.concat(
         [
             pl.read_csv(event, infer_schema_length=10000)
             .pipe(pipe_assign_file_name, event)
-            .pipe(pipe_rename_columns_names)
+            .pipe(pipe_rename_column_names)
             .pipe(pipe_fix_dtype)
             .pipe(pipe_convert_time_to_seconds)
             .pipe(pipe_remove_all_null_columns)
@@ -39,17 +53,17 @@ def import_men_running_only_events() -> pl.DataFrame:
             .pipe(pipe_fix_issue_with_half_marathon_distance)
             .pipe(pipe_drop_unwanted_columns)
             .pipe(pipe_get_wr_strength_by_comparing_with_tenth)
-            for event in get_men_running_only_files()
+            for event in get_running_only_files(sex)
         ],
         how="diagonal",
     )
 
 
-def get_men_running_only_files() -> list[str]:
+def get_running_only_files(sex: str) -> list[str]:
     return [
         f
         for f in glob.glob(  # Get all csv files recursively.
-            "../data/men/standard/*/legal/0*.csv", recursive=True
+            f"../data/{sex}/standard/*/legal/0*.csv", recursive=True
         )
         if (
             "metres" in f

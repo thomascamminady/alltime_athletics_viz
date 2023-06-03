@@ -29,6 +29,7 @@ def pipe_get_event_distance(df: pl.DataFrame) -> pl.DataFrame:
             "400m hurdles": 400,
             "100 metres": 100,
             "800 metres": 800,
+            "100m hurdles": 100,
             "110m hurdles": 110,
             "half-marathon": 21097.5,
             "10000 metres": 10000,
@@ -58,6 +59,7 @@ def pipe_get_percentage_wrt_world_record(df: pl.DataFrame) -> pl.DataFrame:
 def pipe_assign_sprint_middle_long_distance(df: pl.DataFrame) -> pl.DataFrame:
     def assign(event):
         d = {
+            "100m hurdles": "sprint",
             "110m hurdles": "sprint",
             "1500 metres": "middle distance",
             "3000m steeplechase": "middle distance",
@@ -85,6 +87,7 @@ def pipe_assign_sprint_middle_long_distance(df: pl.DataFrame) -> pl.DataFrame:
 def pipe_assign_has_hurdles_or_not(df: pl.DataFrame) -> pl.DataFrame:
     def assign(event):
         d = {
+            "100m hurdles": True,
             "110m hurdles": True,
             "1500 metres": False,
             "3000m steeplechase": True,
@@ -112,6 +115,7 @@ def pipe_assign_has_hurdles_or_not(df: pl.DataFrame) -> pl.DataFrame:
 def pipe_assign_track_event_or_not(df: pl.DataFrame) -> pl.DataFrame:
     def assign(event):
         d = {
+            "100m hurdles": True,
             "110m hurdles": True,
             "1500 metres": True,
             "3000m steeplechase": True,
@@ -145,7 +149,7 @@ def pipe_fix_issue_with_half_marathon_distance(df: pl.DataFrame) -> pl.DataFrame
 
 def pipe_convert_time_to_seconds(df: pl.DataFrame) -> pl.DataFrame:
     def convert_time_to_seconds(time_string):
-        to_replace = ["A", "y", "+", "#", "a", "d", "´", "@"]
+        to_replace = ["A", "y", "+", "#", "a", "d", "´", "@", "p"]
         for r in to_replace:
             time_string = time_string.replace(r, "")
 
@@ -170,12 +174,74 @@ def pipe_fix_dtype(df: pl.DataFrame) -> pl.DataFrame:
     return df.with_columns(pl.col("rank").cast(int))
 
 
-def pipe_rename_columns_names(df: pl.DataFrame) -> pl.DataFrame:
+def pipe_rename_columns_names_men(df: pl.DataFrame) -> pl.DataFrame:
     def decide_mapping_men(name, number_columns, mappings):
         if "half" in name:
             return mappings[2]
         if "1500" in name or "400m hurdles" in name:
             return mappings[3]
+        if number_columns == 12:
+            return mappings[0]
+        return mappings[1]
+
+    def get_mappings_men() -> list[dict[str, str]]:
+        return [
+            {
+                "0": "rank",
+                "1": "result",
+                "2": "wind",
+                "3": "name",
+                "4": "nationality",
+                "5": "date of birth",
+                "6": "rank in event",
+                "7": "location of event",
+                "8": "date of event",
+            },
+            {
+                "0": "rank",
+                "1": "result",
+                "2": "name",
+                "3": "nationality",
+                "4": "date of birth",
+                "5": "rank in event",
+                "6": "location of event",
+                "7": "date of event",
+            },
+            {
+                "0": "rank",
+                "1": "result",
+                "2": "name",
+                "3": "nationality",
+                "4": "date of birth",
+                "5": "rank in event",
+                "6": "location of event",
+                "8": "date of event",
+            },
+            {
+                "0": "rank",
+                "1": "result",
+                "2": "name",
+                "4": "nationality",
+                "5": "date of birth",
+                "6": "rank in event",
+                "7": "location of event",
+                "8": "date of event",
+            },
+        ]
+
+    mappings = get_mappings_men()
+
+    return df.with_columns([pl.col(c).cast(str) for c in df.columns]).rename(
+        mapping=decide_mapping_men(df["event"].unique()[0], len(df.columns), mappings)
+    )
+
+
+def pipe_rename_columns_names_women(df: pl.DataFrame) -> pl.DataFrame:
+    def decide_mapping_men(name, number_columns, mappings):
+        if "half" in name:
+            return mappings[2]
+        # if "1500" in name or "400m hurdles" in name:
+        #    return mappings[3]
         if number_columns == 12:
             return mappings[0]
         return mappings[1]
