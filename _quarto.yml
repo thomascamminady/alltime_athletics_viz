@@ -16,10 +16,8 @@ website:
     search: true
     contents:
       - index.qmd
-      - section: "Simple graphs"
-        contents:
-          - notebooks/overview_of_data.ipynb
-          - notebooks/main.ipynb
+      - notebooks/the_data.ipynb
+      - notebooks/world_records.ipynb
 
 
 format:
