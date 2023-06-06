@@ -1,0 +1,43 @@
+project:
+  type: website
+  output-dir: docs
+
+date: last-modified
+
+execute:
+  cache: false
+
+
+
+
+website:
+  sidebar:
+    style: "docked"
+    search: true
+    contents:
+      - index.qmd
+      - section: "Simple graphs"
+        contents:
+          - notebooks/overview_of_data.ipynb
+          - notebooks/main.ipynb
+
+
+format:
+  html:
+    code-fold: true
+    code-tools: true
+    code-copy: true
+    code-link: true
+    highlight-style: dracula
+    code-line-numbers: true
+    grid:
+      body-width: 1800px
+      sidebar-width: 200px
+      margin-width: 200px
+
+
+    theme:
+      - default
+    toc: true
+    fontsize: 1.2em
+    linestretch: 1.7
